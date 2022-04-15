@@ -21,7 +21,6 @@ impl Programs {
 	}
 
 	pub fn save(&self) -> Result<(), Box<dyn Error>> {
-		println!("Saving State: {:?}", self);
 		let config = get_config()?;
 		fs::write(config, serde_json::to_string(&self)?)?;
 		Ok(())
@@ -30,7 +29,6 @@ impl Programs {
 	pub fn generate_install(&self) -> Result<(), Box<dyn Error>> {
 		let mut dir = get_config_dir()?;
 		dir.push("install.sh");
-		println!("{:?}", dir);
 		let installs: String = self.list.iter().map(|item| item.clone() + " ").collect();
 		let install = format!(
 			"
@@ -71,6 +69,13 @@ yay --noconfirm -S {}
 			.collect();
 		self.save()?;
 		Ok(())
+	}
+
+	pub fn list(&self) {
+		println!("Current Commands are:");
+		for (index, program) in self.list.iter().enumerate() {
+			println!("    {:<4}{}", index, program);
+		}
 	}
 }
 
