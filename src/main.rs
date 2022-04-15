@@ -44,7 +44,7 @@ impl Programs {
 		Ok(())
 	}
 
-	fn load() -> Result<Self, Box<dyn Error>> {
+	pub fn load() -> Result<Self, Box<dyn Error>> {
 		let config = Programs::get_config()?;
 		Programs::check_config(&config)?;
 		let json = fs::read_to_string(config)?;
@@ -52,14 +52,14 @@ impl Programs {
 		Ok(programs)
 	}
 
-	fn save(&self) -> Result<(), Box<dyn Error>> {
+	pub fn save(&self) -> Result<(), Box<dyn Error>> {
 		println!("Saving State: {:?}", self);
 		let config = Programs::get_config()?;
 		fs::write(config, serde_json::to_string(&self)?)?;
 		Ok(())
 	}
 
-	fn generate_install(&self) -> Result<(), Box<dyn Error>> {
+	pub fn generate_install(&self) -> Result<(), Box<dyn Error>> {
 		let mut dir = Programs::get_config_dir()?;
 		dir.push("install.sh");
 		println!("{:?}", dir);
@@ -82,6 +82,28 @@ yay --noconfirm -S {}
 		fs::set_permissions(dir, perms)?;
 		Ok(())
 	}
+
+	pub fn add(&mut self, value: String) -> Result<(), Box<dyn Error>> {
+		self.list = Programs::load()?.list;
+		self.list.push(value);
+		self.save()?;
+		Ok(())
+	}
+	pub fn remove(&mut self, value: String) -> Result<(), Box<dyn Error>> {
+		self.list = Programs::load()?.list;
+		self.list = self
+			.list
+			.iter()
+			.filter_map(|item| {
+				if item.clone() != value {
+					return Some(item.clone());
+				}
+				None
+			})
+			.collect();
+		self.save()?;
+		Ok(())
+	}
 }
 
 fn main() {
@@ -90,7 +112,7 @@ fn main() {
 		.version("0.1.0")
 		.author("Jumner")
 		.arg(
-			Arg::with_name("Program to add")
+			Arg::with_name("Add")
 				.short("S")
 				.long("add")
 				.takes_value(true)
@@ -98,7 +120,7 @@ fn main() {
 				.help("Add a Program to the installer"),
 		)
 		.arg(
-			Arg::with_name("Program to remove")
+			Arg::with_name("Remove")
 				.short("R")
 				.long("Remove")
 				.takes_value(true)
@@ -106,8 +128,15 @@ fn main() {
 				.help("Remove a program from the installer"),
 		);
 	let matches = app.get_matches();
+	let mut programs = Programs::load().unwrap();
+
+	if let Some(value) = matches.value_of("Add") {
+		programs.add(value.to_string()).unwrap();
+	}
+	if let Some(value) = matches.value_of("Remove") {
+		programs.remove(value.to_string()).unwrap();
+	}
 	matches.value_of("Add");
-	let programs = Programs::load().unwrap();
 	programs.generate_install().unwrap();
 	println!("{:?}", programs);
 	println!("Hello, world!");
