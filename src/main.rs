@@ -3,7 +3,7 @@ use std::fs;
 use std::os::unix::prelude::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use clap::App;
+use clap::{App, Arg};
 use dirs::config_dir;
 use serde::{Deserialize, Serialize};
 
@@ -74,8 +74,8 @@ makepkg -si
 yay
 yay --noconfirm -S {}
 ",
-installs
-);
+			installs
+		);
 		fs::write(&dir, install)?;
 		let mut perms = fs::metadata(&dir)?.permissions();
 		perms.set_mode(0o777);
@@ -87,7 +87,27 @@ installs
 fn main() {
 	let app = App::new("Perm")
 		.about("A nice easy install helper written in rust.")
-		let programs = Programs::load().unwrap();
+		.version("0.1.0")
+		.author("Jumner")
+		.arg(
+			Arg::with_name("Program to add")
+				.short("S")
+				.long("add")
+				.takes_value(true)
+				.value_name("Program")
+				.help("Add a Program to the installer"),
+		)
+		.arg(
+			Arg::with_name("Program to remove")
+				.short("R")
+				.long("Remove")
+				.takes_value(true)
+				.value_name("Program")
+				.help("Remove a program from the installer"),
+		);
+	let matches = app.get_matches();
+	matches.value_of("Add");
+	let programs = Programs::load().unwrap();
 	programs.generate_install().unwrap();
 	println!("{:?}", programs);
 	println!("Hello, world!");
