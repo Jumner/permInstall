@@ -1,4 +1,4 @@
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg};
 use perm::Programs;
 
 fn main() {
@@ -28,6 +28,12 @@ fn main() {
 				.long("List")
 				.help("List the programs in the install script"),
 		)
+		.arg(
+			Arg::with_name("Build")
+				.short("b")
+				.long("Build")
+				.help("Build the install.sh script"),
+		)
 		.get_matches();
 	let mut programs = Programs::load().unwrap();
 	if let Some(value) = matches.value_of("Add") {
@@ -35,6 +41,9 @@ fn main() {
 	}
 	if let Some(value) = matches.value_of("Remove") {
 		programs.remove(value.to_string()).unwrap();
+	}
+	if matches.is_present("Build") {
+		programs.generate_install().unwrap();
 	}
 	if matches.is_present("List") {
 		programs.list();

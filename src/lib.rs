@@ -29,9 +29,12 @@ impl Programs {
 	pub fn generate_install(&self) -> Result<(), Box<dyn Error>> {
 		let mut dir = get_config_dir()?;
 		dir.push("install.sh");
+		let mut post_install = get_config_dir()?;
+		post_install.push("postInstall.sh");
 		let installs: String = self.list.iter().map(|item| item.clone() + " ").collect();
 		let install = format!(
 			"
+#!/bin/sh
 sudo pacman --needed -S base-devel git
 git clone https://aur.archlinux.org/yay.git
 cd yay
@@ -39,8 +42,13 @@ makepkg -si
 
 yay
 yay --noconfirm -S {}
+
+#=== Post install script ===#
+
+{}
 ",
-			installs
+			installs,
+			fs::read_to_string(post_install)?
 		);
 		fs::write(&dir, install)?;
 		let mut perms = fs::metadata(&dir)?.permissions();
